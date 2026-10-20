@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>VCamStudio</RootNamespace>
+    <AssemblyName>VCamStudio</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.6</Version>
+    <FileVersion>1.0.6.0</FileVersion>
+    <AssemblyVersion>1.0.6.0</AssemblyVersion>
+    <StartupObject>VCamStudio.App</StartupObject>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DirectNCore" Version="1.17.3" />
+    <ProjectReference Include="..\VCamStudio.Shared\VCamStudio.Shared.csproj" />
+    <ProjectReference Include="..\VCamSource\VCamSource.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- The COM media source cannot be loaded from inside the UI's single-file
+       bundle. Embed the payload so INSTALLER can extract the exact files into
+       %ProgramData%\VCamStudio\Source before registering the COM host. -->
+  <Target Name="EmbedVirtualCameraPayload"
+          BeforeTargets="CreateManifestResourceNames"
+          DependsOnTargets="ResolveProjectReferences"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <VCamSourceOutputDir Condition="Exists('$(MSBuildThisFileDirectory)..\VCamSource\bin\x64\$(Configuration)\net8.0-windows\win-x64\VCamSource.comhost.dll')">$(MSBuildThisFileDirectory)..\VCamSource\bin\x64\$(Configuration)\net8.0-windows\win-x64</VCamSourceOutputDir>
+      <VCamSourceOutputDir Condition="'$(VCamSourceOutputDir)' == ''">$(MSBuildThisFileDirectory)..\VCamSource\bin\$(Configuration)\net8.0-windows\win-x64</VCamSourceOutputDir>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(VCamSourceOutputDir)\VCamSource.comhost.dll')"
+           Text="找不到 COM 媒体源载荷：$(VCamSourceOutputDir)。请先构建 VCamSource 项目。" />
+
+    <ItemGroup>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\VCamSource.comhost.dll">
+        <LogicalName>VCamStudio.Payload.VCamSource.comhost.dll</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\VCamSource.dll">
+        <LogicalName>VCamStudio.Payload.VCamSource.dll</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\VCamSource.deps.json">
+        <LogicalName>VCamStudio.Payload.VCamSource.deps.json</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\VCamSource.runtimeconfig.json">
+        <LogicalName>VCamStudio.Payload.VCamSource.runtimeconfig.json</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\VCamStudio.Shared.dll">
+        <LogicalName>VCamStudio.Payload.VCamStudio.Shared.dll</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+      <EmbeddedResource Include="$(VCamSourceOutputDir)\DirectNCore.dll">
+        <LogicalName>VCamStudio.Payload.DirectNCore.dll</LogicalName>
+        <WithCulture>false</WithCulture>
+        <Type>Non-Resx</Type>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+
+</Project>
+
